@@ -1,0 +1,18 @@
+# One owner per folder. Later lines win. See AGENTS.md.
+*                        @waynevivek
+/CONTRACT.md             @waynevivek
+/schemas/                @waynevivek
+/docs/                   @waynevivek
+/agents/                 @waynevivek
+
+/infra/                  @Ritweek17
+/demo/                   @Ritweek17
+/docs/SETUP.md           @Ritweek17
+
+/fixtures/               @udayjain06
+/sandbox/                @udayjain06
+/tests/                  @udayjain06
+/docs/NOT-BUILT-YET.md   @udayjain06
+
+# TODO(M3b): replace with Saurabh's GitHub handle
+/tools/                  @waynevivek

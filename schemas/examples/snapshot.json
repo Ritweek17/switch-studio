@@ -1,0 +1,68 @@
+{
+  "schema": "studio/snapshot@1",
+  "generated_at": "2026-11-04T10:14:05Z",
+  "repo": {
+    "name": "switch-studio"
+  },
+  "range": "v0.1..HEAD",
+  "head": "9f3c2a1e7b4d5c6a8e9f0a1b2c3d4e5f6a7b8c9d",
+  "commits": [
+    {
+      "hash": "9f3c2a1e7b4d5c6a8e9f0a1b2c3d4e5f6a7b8c9d",
+      "author_name": "Saurabh",
+      "author_email": "saurabh@example.com",
+      "date": "2026-11-04T08:12:00Z",
+      "subject": "Add claim verifier CLI (#12)",
+      "files": [
+        {
+          "path": "tools/verify.py",
+          "status": "A",
+          "added": 182,
+          "deleted": 0
+        },
+        {
+          "path": "tests/test_verify.py",
+          "status": "A",
+          "added": 64,
+          "deleted": 0
+        }
+      ]
+    },
+    {
+      "hash": "4b1e8d0c2f6a9b3e5d7c1a0f8e2b4d6c9a1e3f5b",
+      "author_name": "Uday",
+      "author_email": "uday@example.com",
+      "date": "2026-11-03T21:40:00Z",
+      "subject": "Add offline fixture for demo repo",
+      "files": [
+        {
+          "path": "fixtures/demo-repo.snapshot.json",
+          "status": "A",
+          "added": 410,
+          "deleted": 0
+        }
+      ]
+    },
+    {
+      "hash": "c7a2e9f1b3d5c8e0a4f6b2d9e1c3a5f7b8d0e2c4",
+      "author_name": "Vivek",
+      "author_email": "vivek@example.com",
+      "date": "2026-11-03T18:05:00Z",
+      "subject": "Write CONTRACT.md v1",
+      "files": [
+        {
+          "path": "CONTRACT.md",
+          "status": "A",
+          "added": 240,
+          "deleted": 0
+        },
+        {
+          "path": "docs/adr/0001-decisions-live-in-adr.md",
+          "status": "M",
+          "added": 3,
+          "deleted": 1
+        }
+      ]
+    }
+  ]
+}

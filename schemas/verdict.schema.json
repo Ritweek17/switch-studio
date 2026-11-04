@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "studio/verdict@1",
+  "title": "Verifier verdict (tools/verify output)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_id", "agent", "created_at", "draft_revision", "pass", "facts", "sentences", "summary"],
+  "properties": {
+    "schema": { "const": "studio/verdict@1" },
+    "run_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,39}$" },
+    "agent": { "const": "tool" },
+    "created_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+    "draft_revision": { "type": "integer", "minimum": 0 },
+    "pass": { "type": "boolean" },
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "ok", "reason"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^F[1-9][0-9]*$" },
+          "ok": { "type": "boolean" },
+          "reason": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "sentences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "ok", "errors"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^S[1-9][0-9]*$" },
+          "ok": { "type": "boolean" },
+          "errors": { "type": "array", "items": { "enum": ["NO_CITATION", "UNKNOWN_FACT", "FACT_INVALID", "NUMBER_UNSUPPORTED", "HASH_UNSUPPORTED"] } }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["facts_total", "facts_ok", "sentences_total", "sentences_ok"],
+      "properties": {
+        "facts_total": { "type": "integer", "minimum": 0 },
+        "facts_ok": { "type": "integer", "minimum": 0 },
+        "sentences_total": { "type": "integer", "minimum": 0 },
+        "sentences_ok": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

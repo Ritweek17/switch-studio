@@ -1,0 +1,66 @@
+{
+  "schema": "studio/verdict@1",
+  "run_id": "demo-001",
+  "agent": "tool",
+  "created_at": "2026-11-04T10:16:05Z",
+  "draft_revision": 0,
+  "pass": false,
+  "facts": [
+    {
+      "id": "F1",
+      "ok": true,
+      "reason": null
+    },
+    {
+      "id": "F2",
+      "ok": true,
+      "reason": null
+    },
+    {
+      "id": "F3",
+      "ok": true,
+      "reason": null
+    },
+    {
+      "id": "F4",
+      "ok": true,
+      "reason": null
+    },
+    {
+      "id": "F5",
+      "ok": true,
+      "reason": null
+    }
+  ],
+  "sentences": [
+    {
+      "id": "S1",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "S2",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "S3",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "S4",
+      "ok": false,
+      "errors": [
+        "NO_CITATION",
+        "NUMBER_UNSUPPORTED"
+      ]
+    }
+  ],
+  "summary": {
+    "facts_total": 5,
+    "facts_ok": 5,
+    "sentences_total": 4,
+    "sentences_ok": 3
+  }
+}

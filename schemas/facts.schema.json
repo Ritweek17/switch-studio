@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "studio/facts@1",
+  "title": "Scout facts",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_id", "agent", "created_at", "snapshot", "facts"],
+  "properties": {
+    "schema": { "const": "studio/facts@1" },
+    "run_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,39}$" },
+    "agent": { "const": "scout" },
+    "created_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "range", "head"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "range": { "type": "string", "minLength": 1 },
+        "head": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+      }
+    },
+    "facts": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "oneOf": [
+        { "$ref": "#/$defs/commit_fact" },
+        { "$ref": "#/$defs/file_fact" },
+        { "$ref": "#/$defs/count_fact" }
+      ] }
+    }
+  },
+  "$defs": {
+    "commit_fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "commit", "subject", "author_name", "date", "statement"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^F[1-9][0-9]*$" },
+        "kind": { "const": "commit" },
+        "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "subject": { "type": "string" },
+        "author_name": { "type": "string" },
+        "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+        "statement": { "type": "string" }
+      }
+    },
+    "file_fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "commit", "path", "status", "statement"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^F[1-9][0-9]*$" },
+        "kind": { "const": "file" },
+        "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "path": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["A", "M", "D", "R"] },
+        "statement": { "type": "string" }
+      }
+    },
+    "count_fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "commit", "metric", "scope", "value", "statement"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^F[1-9][0-9]*$" },
+        "kind": { "const": "count" },
+        "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "metric": { "enum": ["commits", "files_changed", "lines_added", "lines_deleted", "contributors"] },
+        "scope": { "enum": ["commit", "run"] },
+        "author_email": { "type": "string" },
+        "value": { "type": "integer", "minimum": 0 },
+        "statement": { "type": "string" }
+      }
+    }
+  }
+}

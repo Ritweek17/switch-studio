@@ -1,0 +1,17 @@
+# Run artifacts (CONTRACT.md §2) — never commit
+runs/
+
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store

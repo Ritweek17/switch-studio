@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "studio/snapshot@1",
+  "title": "Repo snapshot (tools/snapshot output; fixtures are saved snapshots)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "generated_at", "repo", "range", "head", "commits"],
+  "properties": {
+    "schema": { "const": "studio/snapshot@1" },
+    "generated_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+    "repo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": { "name": { "type": "string", "minLength": 1 } }
+    },
+    "range": { "type": "string", "minLength": 1 },
+    "head": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "commits": { "type": "array", "items": { "$ref": "#/$defs/commit" } }
+  },
+  "$defs": {
+    "commit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hash", "author_name", "author_email", "date", "subject", "files"],
+      "properties": {
+        "hash": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "author_name": { "type": "string" },
+        "author_email": { "type": "string" },
+        "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+        "subject": { "type": "string" },
+        "files": { "type": "array", "items": { "$ref": "#/$defs/file" } }
+      }
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "status", "added", "deleted"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["A", "M", "D", "R"] },
+        "added": { "type": ["integer", "null"], "minimum": 0 },
+        "deleted": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    }
+  }
+}
