@@ -1,0 +1,147 @@
+{
+  "schema": "studio/snapshot@1",
+  "generated_at": "2026-11-04T12:00:00Z",
+  "repo": {
+    "name": "demo-repo"
+  },
+  "range": "v0.1..HEAD",
+  "head": "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b",
+  "commits": [
+    {
+      "hash": "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b",
+      "author_name": "Elena Rostova",
+      "author_email": "elena@example.com",
+      "date": "2026-11-04T11:45:00Z",
+      "subject": "Add streaming telemetry exporter (#105)",
+      "files": [
+        {
+          "path": "src/telemetry/exporter.py",
+          "status": "A",
+          "added": 142,
+          "deleted": 0
+        },
+        {
+          "path": "tests/test_exporter.py",
+          "status": "A",
+          "added": 78,
+          "deleted": 0
+        },
+        {
+          "path": "docs/telemetry.md",
+          "status": "M",
+          "added": 25,
+          "deleted": 4
+        }
+      ]
+    },
+    {
+      "hash": "2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c",
+      "author_name": "Marcus Vance",
+      "author_email": "marcus@example.com",
+      "date": "2026-11-04T09:15:00Z",
+      "subject": "Refactor buffer pool and rename old engine (#104)",
+      "files": [
+        {
+          "path": "src/engine/v2_buffer.py",
+          "status": "R",
+          "added": 34,
+          "deleted": 12
+        },
+        {
+          "path": "src/engine/legacy.py",
+          "status": "D",
+          "added": 0,
+          "deleted": 85
+        },
+        {
+          "path": "benchmarks/bench_pool.py",
+          "status": "M",
+          "added": 19,
+          "deleted": 6
+        }
+      ]
+    },
+    {
+      "hash": "3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d",
+      "author_name": "Priya Sharma",
+      "author_email": "priya@example.com",
+      "date": "2026-11-03T16:30:00Z",
+      "subject": "Implement lock-free queue in core pipeline (#103)",
+      "files": [
+        {
+          "path": "src/core/queue.py",
+          "status": "A",
+          "added": 215,
+          "deleted": 0
+        },
+        {
+          "path": "src/core/pipeline.py",
+          "status": "M",
+          "added": 56,
+          "deleted": 41
+        },
+        {
+          "path": "tests/test_queue.py",
+          "status": "A",
+          "added": 92,
+          "deleted": 0
+        }
+      ]
+    },
+    {
+      "hash": "4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e",
+      "author_name": "Elena Rostova",
+      "author_email": "elena@example.com",
+      "date": "2026-11-03T11:20:00Z",
+      "subject": "Add schema migration utilities (#102)",
+      "files": [
+        {
+          "path": "src/db/migrate.py",
+          "status": "A",
+          "added": 160,
+          "deleted": 0
+        },
+        {
+          "path": "schemas/v2_manifest.json",
+          "status": "A",
+          "added": 45,
+          "deleted": 0
+        },
+        {
+          "path": "assets/logo.png",
+          "status": "A",
+          "added": null,
+          "deleted": null
+        }
+      ]
+    },
+    {
+      "hash": "5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f",
+      "author_name": "Marcus Vance",
+      "author_email": "marcus@example.com",
+      "date": "2026-11-02T14:00:00Z",
+      "subject": "Initial architecture scaffolding (#101)",
+      "files": [
+        {
+          "path": "README.md",
+          "status": "A",
+          "added": 65,
+          "deleted": 0
+        },
+        {
+          "path": "pyproject.toml",
+          "status": "A",
+          "added": 30,
+          "deleted": 0
+        },
+        {
+          "path": "src/core/__init__.py",
+          "status": "A",
+          "added": 5,
+          "deleted": 0
+        }
+      ]
+    }
+  ]
+}
+
