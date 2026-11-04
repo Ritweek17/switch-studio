@@ -330,4 +330,3 @@ def test_number_from_subject_and_path_is_supported(base_snapshot, base_facts):
     s1 = verdict["sentences"][0]
     assert "NUMBER_UNSUPPORTED" not in s1["errors"]
     assert s1["ok"] is True
-

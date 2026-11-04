@@ -207,4 +207,3 @@ def test_ship_succeeds_when_all_decided_and_surviving_pass(base_snapshot, base_f
     )
     assert decision["result"]["accepted"] is True
     assert decision["result"]["error"] is None
-

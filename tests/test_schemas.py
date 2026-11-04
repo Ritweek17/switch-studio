@@ -228,4 +228,3 @@ def test_payload_ref_invalid_envelope_shape():
     }
     errors = validate(bad_ref)
     assert any("payload_ref" in e for e in errors)
-
