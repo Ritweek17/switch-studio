@@ -39,8 +39,38 @@ python3 -m schemas.validate --examples
 
 ## Running Tests
 
-> **Owner:** Uday (`@udayjain06`, M3a) — expand this section as `/tests` and `/sandbox` land.
+Requires Python 3.11+; `pytest` is the only development dependency. On Windows, use `python` rather than assuming `python3` is installed.
 
 ```bash
-pytest
+python --version
+pytest --version
+```
+
+Run all tests across schema validation, deterministic claim verification, and human decision replay:
+
+```bash
+pytest -W error -p no:anyio -p no:cacheprovider
+```
+
+Run individual test suites:
+
+```bash
+pytest tests/test_schemas.py    # Schema conformance and payload_ref resolution
+pytest tests/test_verify.py     # Verifier rules and safeguard checks
+pytest tests/test_decisions.py  # Decision replay and ship gating
+```
+
+Validate repository fixtures:
+
+```bash
+python -m schemas.validate --examples
+python -m schemas.validate fixtures/demo-repo.snapshot.json
+```
+
+Run the offline sandbox pipeline (end-to-end mock orchestration):
+
+```bash
+python -m sandbox.run
+python -m sandbox.run --format howiswitch
+python -m sandbox.run --format blog_section
 ```
