@@ -15,3 +15,11 @@ venv/
 .vscode/
 .idea/
 .DS_Store
+
+# Local teaching / study artifacts
+MISSION.md
+NOTES.md
+RESOURCES.md
+assets/
+lessons/
+learning-records/
