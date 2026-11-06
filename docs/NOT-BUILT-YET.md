@@ -16,3 +16,9 @@ Switch Studio deliberately cuts scope so our core guarantee—**every surviving 
 1. **Spelled-out number words are not checked:** The deterministic verifier checks digit tokens (`3`, `246`, `1,024`) and hex hashes (`9f3c2a1`), not English words like `"three"` or `"a dozen"` ([ADR-0005](adr/0005-deterministic-verification-rules.md)). Writer prompts forbid spelling out counts, and the Editor flags them as `OVERCLAIM` if they slip through.
 2. **No calculated or derived numbers (ratios, percentages, speedups):** Every number in a sentence must match a cited `count` fact's exact `value` or a number token in a cited commit's `subject`/`path` ([ADR-0005](adr/0005-deterministic-verification-rules.md)). Claims like `"40% fewer lines"` or `"2x faster"` fail with `NUMBER_UNSUPPORTED`.
 3. **Heuristic sentence splitting in `tools.grade` only:** Inside Switch Studio, drafts are structured JSON (`S1…Sn`) so code never guesses sentence boundaries ([ADR-0004](adr/0004-structured-facts-and-sentences.md)). Only `tools.grade` splits free-form markdown on `. ! ?` so it can score an uncited one-shot baseline on equal footing.
+
+## Known M2 Agent Gaps in v1
+
+1. **LLM mode (`--llm`) is untested in CI:** Live OpenAI API calls in `agents/` require `OPENAI_API_KEY` and network access; automated tests cover only the deterministic offline path.
+2. **Scout non-LLM mode caps per-commit extraction:** Deterministic Scout reads only the first 10 commits in `snapshot.commits` and extracts a `file` fact only for the first file of each commit (run-level `count` facts still aggregate across the full snapshot).
+3. **Temporary `verify_draft_locally` fallback in Editor:** `agents/editor/agent.py` includes `verify_draft_locally` so M2 can be tested before M3b merges; `verify_draft_locally` must be deleted once `tools.verify` merges to `main`.
