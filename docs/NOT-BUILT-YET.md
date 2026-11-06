@@ -27,3 +27,9 @@ Switch Studio deliberately cuts scope so our core guarantee—**every surviving 
 The M3a sandbox is a self-contained, offline demonstration: deterministic mock Scout, Writer, and Editor stages generate contract-shaped artifacts from the saved fixture, then use local sandbox verification, decision replay, and rendering. It needs no Git checkout, network connection, room bridge, external API, or LLM credential.
 
 The production M3b `/tools/` implementation is not present in this checkout. The sandbox modules are intentionally **not** aliases or substitutes for those production tools; M3b integration remains deferred. The sandbox validates its own deterministic behavior and preserves auditable run artifacts, but it does not establish production-tool compatibility until M3b lands.
+
+## Known M2 Agent Gaps in v1
+
+1. **LLM mode (`--llm`) is untested in CI:** Live OpenAI API calls in `agents/` require `OPENAI_API_KEY` and network access; automated tests cover only the deterministic offline path.
+2. **Scout non-LLM mode caps per-commit extraction:** Deterministic Scout reads only the first 10 commits in `snapshot.commits` and extracts a `file` fact only for the first file of each commit (run-level `count` facts still aggregate across the full snapshot).
+3. **Temporary `verify_draft_locally` fallback in Editor:** `agents/editor/agent.py` includes `verify_draft_locally` so M2 can be tested before M3b merges; `verify_draft_locally` must be deleted once `tools.verify` merges to `main`.
