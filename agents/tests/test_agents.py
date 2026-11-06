@@ -17,7 +17,7 @@ from agents.editor import (
     detect_overclaim,
     main as editor_main,
     run_editor,
-    verify_draft_locally,
+    run_verifier,
 )
 from agents.scout import (
     compute_count_metric,
@@ -115,7 +115,7 @@ def test_writer_initial_draft_and_revision_invariants() -> None:
         assert len(sent["facts"]) >= 1
         assert detect_overclaim(sent, {f["id"]: f for f in facts_doc["facts"]}) is None
 
-    verdict_r0 = verify_draft_locally(snapshot, facts_doc, draft_r0)
+    verdict_r0 = run_verifier(snapshot, facts_doc, draft_r0)
     assert verdict_r0["pass"] is True
 
     # Revision test on worked example r0 -> r1

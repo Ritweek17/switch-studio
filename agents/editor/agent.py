@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import re
 import subprocess
@@ -22,17 +21,10 @@ from agents._common import (
     utc_now,
     write_document,
 )
-from agents.scout.agent import verify_fact_against_snapshot
 from schemas.validate import DocumentError
+from tools.verify import verify_draft
 
 AGENT_DIR = Path(__file__).resolve().parent
-
-_CITATION_TAG_RE = re.compile(r"\[F\d+\]")
-_SENTENCE_ID_RE = re.compile(r"\bS\d+\b")
-_ISO_DATE_RE = re.compile(r"\b(\d{4}-\d{2}-\d{2})(?:T\d{2}:\d{2}(?::\d{2})?Z)?\b")
-_HEX_HASH_RE = re.compile(r"\b[0-9a-f]{7,40}\b")
-_NUMBER_TOKEN_RE = re.compile(r"(?<![\w/.\-])(\d+(?:,\d{3})*(?:\.\d+)?%?)")
-_SUBJECT_OR_PATH_NUM_RE = re.compile(r"\d+(?:,\d{3})*(?:\.\d+)?")
 
 _NUMBER_WORD_RE = re.compile(
     r"\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|dozen)\b",
@@ -62,161 +54,6 @@ _OVERCLAIM_PATTERNS: list[tuple[re.Pattern[str], str]] = [
 ]
 
 
-def _extract_allowed_number_strings(cited_facts: list[dict[str, Any]]) -> set[str]:
-    """Return string representations of numbers allowed by `cited_facts` per CONTRACT.md §6.4."""
-    allowed: set[str] = set()
-    for fact in cited_facts:
-        kind = fact.get("kind")
-        if kind == "count":
-            allowed.add(str(fact.get("value")))
-        for field in ("subject", "path"):
-            val = fact.get(field)
-            if isinstance(val, str):
-                for m in _SUBJECT_OR_PATH_NUM_RE.findall(val):
-                    allowed.add(m.replace(",", ""))
-    return allowed
-
-
-def verify_draft_locally(
-    snapshot: dict[str, Any],
-    facts_doc: dict[str, Any],
-    draft_doc: dict[str, Any],
-    *,
-    created_at: str | None = None,
-) -> dict[str, Any]:
-    """Fallback implementation of `CONTRACT.md` §6 producing a `studio/verdict@1` document.
-
-    Used when `tools.verify` is not yet installed in the workspace or when running
-    in-memory unit tests without subprocess files.
-    """
-    ensure_valid(snapshot)
-    ensure_valid(facts_doc)
-    ensure_valid(draft_doc)
-
-    commits_by_hash = {c["hash"]: c for c in snapshot.get("commits", [])}
-    fact_results: list[dict[str, Any]] = []
-    facts_by_id: dict[str, dict[str, Any]] = {}
-    fact_ok_by_id: dict[str, bool] = {}
-
-    for fact in facts_doc.get("facts", []):
-        fid = fact["id"]
-        facts_by_id[fid] = fact
-        reason = verify_fact_against_snapshot(fact, snapshot)
-        ok = reason is None
-        fact_ok_by_id[fid] = ok
-        fact_results.append({"id": fid, "ok": ok, "reason": reason})
-
-    sentence_results: list[dict[str, Any]] = []
-    for sent in draft_doc.get("sentences", []):
-        sid = sent["id"]
-        text = sent["text"]
-        cited_ids = sent.get("facts", [])
-        errors: list[str] = []
-
-        # Step 1: Citation checks
-        if not cited_ids:
-            errors.append("NO_CITATION")
-
-        unknown = any(fid not in facts_by_id for fid in cited_ids)
-        if unknown:
-            errors.append("UNKNOWN_FACT")
-
-        valid_cited_facts = [facts_by_id[fid] for fid in cited_ids if fid in facts_by_id]
-        if any(not fact_ok_by_id.get(fid, True) for fid in cited_ids if fid in facts_by_id):
-            errors.append("FACT_INVALID")
-
-        # Step 2: Strip [F\d+] tags, \bS\d+\b sentence IDs, and ISO dates matching a cited commit's date
-        cited_dates: set[str] = set()
-        for f in valid_cited_facts:
-            if "date" in f and isinstance(f["date"], str):
-                cited_dates.add(f["date"][:10])
-            c_obj = commits_by_hash.get(f.get("commit", ""))
-            if c_obj and isinstance(c_obj.get("date"), str):
-                cited_dates.add(c_obj["date"][:10])
-
-        scan_text = _CITATION_TAG_RE.sub(" ", text)
-        scan_text = _SENTENCE_ID_RE.sub(" ", scan_text)
-
-        def _strip_matching_date(match: re.Match[str]) -> str:
-            date_part = match.group(1)
-            return " " if date_part in cited_dates else match.group(0)
-
-        scan_text = _ISO_DATE_RE.sub(_strip_matching_date, scan_text)
-
-        # Step 3: Hashes (7..40 hex chars with at least one a-f letter)
-        cited_commits = [f["commit"] for f in valid_cited_facts if "commit" in f]
-        hash_unsupported = False
-
-        def _check_and_strip_hash(match: re.Match[str]) -> str:
-            nonlocal hash_unsupported
-            token = match.group(0)
-            if not any(ch in token for ch in "abcdef"):
-                return token
-            if any(full_hash.startswith(token) for full_hash in cited_commits):
-                return " "
-            hash_unsupported = True
-            return " "
-
-        scan_text = _HEX_HASH_RE.sub(_check_and_strip_hash, scan_text)
-        if hash_unsupported:
-            errors.append("HASH_UNSUPPORTED")
-
-        # Step 4: Numbers
-        allowed_numbers = _extract_allowed_number_strings(valid_cited_facts)
-        number_unsupported = False
-        for match in _NUMBER_TOKEN_RE.finditer(scan_text):
-            raw_token = match.group(1)
-            if raw_token.endswith("%"):
-                number_unsupported = True
-                break
-            normalized = raw_token.replace(",", "")
-            if normalized not in allowed_numbers:
-                number_unsupported = True
-                break
-
-        if number_unsupported:
-            errors.append("NUMBER_UNSUPPORTED")
-
-        sentence_results.append(
-            {
-                "id": sid,
-                "ok": len(errors) == 0,
-                "errors": errors,
-            }
-        )
-
-    facts_total = len(fact_results)
-    facts_ok = sum(1 for f in fact_results if f["ok"])
-    sentences_total = len(sentence_results)
-    sentences_ok = sum(1 for s in sentence_results if s["ok"])
-
-    verdict: dict[str, Any] = {
-        "schema": "studio/verdict@1",
-        "run_id": draft_doc["run_id"],
-        "agent": "tool",
-        "created_at": created_at or utc_now(),
-        "draft_revision": draft_doc["revision"],
-        "pass": (facts_ok == facts_total) and (sentences_ok == sentences_total),
-        "facts": fact_results,
-        "sentences": sentence_results,
-        "summary": {
-            "facts_total": facts_total,
-            "facts_ok": facts_ok,
-            "sentences_total": sentences_total,
-            "sentences_ok": sentences_ok,
-        },
-    }
-    return ensure_valid(verdict)
-
-
-def _has_tools_verify() -> bool:
-    """Return True if `tools.verify` is importable in the current environment."""
-    try:
-        return importlib.util.find_spec("tools.verify") is not None
-    except ModuleNotFoundError:
-        return False
-
-
 def run_verifier(
     snapshot: dict[str, Any],
     facts_doc: dict[str, Any],
@@ -227,11 +64,9 @@ def run_verifier(
     draft_path: str | Path | None = None,
     verdict_out_path: str | Path | None = None,
 ) -> dict[str, Any]:
-    """Execute `python -m tools.verify` if available and paths are on disk, else fallback locally."""
-    has_tools_verify = _has_tools_verify()
+    """Execute `python -m tools.verify` if available and paths are on disk, else `verify_draft`."""
     if (
-        has_tools_verify
-        and snapshot_path is not None
+        snapshot_path is not None
         and facts_path is not None
         and draft_path is not None
         and Path(snapshot_path).is_file()
@@ -262,7 +97,8 @@ def run_verifier(
             except (DocumentError, json.JSONDecodeError):
                 pass
 
-    verdict = verify_draft_locally(snapshot, facts_doc, draft_doc)
+    verdict = verify_draft(snapshot, facts_doc, draft_doc)
+    ensure_valid(verdict)
     if verdict_out_path is not None:
         write_document(verdict, verdict_out_path)
     return verdict

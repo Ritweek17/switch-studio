@@ -8,7 +8,6 @@ from agents.editor.agent import (
     run_editor,
     run_verifier,
     summarize_review,
-    verify_draft_locally,
 )
 
 __all__ = [
@@ -17,5 +16,4 @@ __all__ = [
     "run_editor",
     "run_verifier",
     "summarize_review",
-    "verify_draft_locally",
 ]

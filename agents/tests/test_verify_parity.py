@@ -1,8 +1,7 @@
-"""Parity tests between `verify_draft_locally` and `tools.verify` across golden cases."""
+"""Tests for Editor verifier execution and tools.verify CLI across golden cases."""
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import subprocess
 import sys
@@ -11,7 +10,7 @@ from typing import Any
 
 import pytest
 
-from agents.editor.agent import verify_draft_locally
+from agents.editor.agent import run_verifier
 from schemas.validate import validate
 
 GOLDEN_PATH = Path(__file__).resolve().parent / "golden_verify_cases.json"
@@ -20,13 +19,6 @@ GOLDEN_PATH = Path(__file__).resolve().parent / "golden_verify_cases.json"
 def _load_golden_cases() -> list[dict[str, Any]]:
     data = json.loads(GOLDEN_PATH.read_text(encoding="utf-8"))
     return data["cases"]
-
-
-def _has_tools_verify() -> bool:
-    try:
-        return importlib.util.find_spec("tools.verify") is not None
-    except ModuleNotFoundError:
-        return False
 
 
 def _normalize_verdict(verdict: dict[str, Any]) -> dict[str, Any]:
@@ -47,12 +39,11 @@ def _normalize_verdict(verdict: dict[str, Any]) -> dict[str, Any]:
     _load_golden_cases(),
     ids=lambda c: c["name"],
 )
-def test_verify_draft_locally_golden_cases(case: dict[str, Any]) -> None:
-    verdict = verify_draft_locally(
+def test_run_verifier_golden_cases(case: dict[str, Any]) -> None:
+    verdict = run_verifier(
         case["snapshot"],
         case["facts"],
         case["draft"],
-        created_at="2026-11-04T10:16:05Z",
     )
     assert validate(verdict) == []
     assert _normalize_verdict(verdict) == case["expected"]
@@ -63,13 +54,10 @@ def test_verify_draft_locally_golden_cases(case: dict[str, Any]) -> None:
     _load_golden_cases(),
     ids=lambda c: c["name"],
 )
-def test_tools_verify_parity_with_local_verifier(
+def test_tools_verify_cli_golden_cases(
     case: dict[str, Any],
     tmp_path: Path,
 ) -> None:
-    if not _has_tools_verify():
-        pytest.skip("tools.verify is not present in this branch yet")
-
     snap_file = tmp_path / "snapshot.json"
     facts_file = tmp_path / "facts.json"
     draft_file = tmp_path / "draft.json"
@@ -78,12 +66,6 @@ def test_tools_verify_parity_with_local_verifier(
     snap_file.write_text(json.dumps(case["snapshot"], indent=2), encoding="utf-8")
     facts_file.write_text(json.dumps(case["facts"], indent=2), encoding="utf-8")
     draft_file.write_text(json.dumps(case["draft"], indent=2), encoding="utf-8")
-
-    local_verdict = verify_draft_locally(
-        case["snapshot"],
-        case["facts"],
-        case["draft"],
-    )
 
     proc = subprocess.run(
         [
@@ -106,5 +88,4 @@ def test_tools_verify_parity_with_local_verifier(
     assert proc.returncode in (0, 1), f"tools.verify failed: {proc.stderr}"
     tool_verdict = json.loads(verdict_file.read_text(encoding="utf-8"))
     assert validate(tool_verdict) == []
-    assert _normalize_verdict(tool_verdict) == _normalize_verdict(local_verdict)
     assert _normalize_verdict(tool_verdict) == case["expected"]
