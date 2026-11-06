@@ -11,11 +11,22 @@ Switch Studio deliberately cuts scope so our core guarantee—**every surviving 
 3. **No GitHub API metadata:** PR review comments, issue threads, stars, and CI run logs are not ingested in v1. Only git commit history and file stats are in `studio/snapshot@1`.
 4. **Merge commits excluded:** `tools.snapshot` runs with `--no-merges` so merge commits do not double-count changed files or inflate line counts ([ADR-0003](adr/0003-local-git-snapshots.md)).
 
-## Known Verification Gaps in v1
+## Known Verification Gaps & Rules in v1
 
 1. **Spelled-out number words are not checked:** The deterministic verifier checks digit tokens (`3`, `246`, `1,024`) and hex hashes (`9f3c2a1`), not English words like `"three"` or `"a dozen"` ([ADR-0005](adr/0005-deterministic-verification-rules.md)). Writer prompts forbid spelling out counts, and the Editor flags them as `OVERCLAIM` if they slip through.
 2. **No calculated or derived numbers (ratios, percentages, speedups):** Every number in a sentence must match a cited `count` fact's exact `value` or a number token in a cited commit's `subject`/`path` ([ADR-0005](adr/0005-deterministic-verification-rules.md)). Claims like `"40% fewer lines"` or `"2x faster"` fail with `NUMBER_UNSUPPORTED`.
 3. **Heuristic sentence splitting in `tools.grade` only:** Inside Switch Studio, drafts are structured JSON (`S1…Sn`) so code never guesses sentence boundaries ([ADR-0004](adr/0004-structured-facts-and-sentences.md)). Only `tools.grade` splits free-form markdown on `. ! ?` so it can score an uncited one-shot baseline on equal footing.
+4. **Exact string matching on commit metadata:** Commit subjects, author names, and dates require exact equality against snapshot records. No fuzzy, case-insensitive, or partial matches are permitted for commit and file facts.
+5. **Hex hashes require letters a-f:** Tokens matching `\b[0-9a-f]{7,40}\b` must contain at least one letter `a–f` to be classified as commit hashes. This prevents purely numeric tokens (e.g., `1000000`) from being parsed as hashes instead of numbers.
+6. **File renames track destination only:** For renames (`status: "R"`), `snapshot.json` stores the destination path; the source path is not tracked in v1.
+7. **Binary files count as zero lines:** Binary files have `null` for `added` and `deleted` in `snapshot.json`, which the verifier and count metrics treat as 0.
+8. **Sequential decision log replay:** `tools.apply` replays `decisions.jsonl` strictly in append order; room command concurrency is linearized by the infra bot before recording.
+
+## M3a Offline Sandbox Boundary
+
+The M3a sandbox is a self-contained, offline demonstration: deterministic mock Scout, Writer, and Editor stages generate contract-shaped artifacts from the saved fixture, then use local sandbox verification, decision replay, and rendering. It needs no Git checkout, network connection, room bridge, external API, or LLM credential.
+
+The production M3b `/tools/` implementation is not present in this checkout. The sandbox modules are intentionally **not** aliases or substitutes for those production tools; M3b integration remains deferred. The sandbox validates its own deterministic behavior and preserves auditable run artifacts, but it does not establish production-tool compatibility until M3b lands.
 
 ## Known M2 Agent Gaps in v1
 
