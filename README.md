@@ -17,10 +17,10 @@
 <br />
 
 <img src="docs/img/studio-agents.png" alt="Scout, Writer, and Editor collaborating in #studio" width="90%" />
-<p><em>Agents collaborating in <code>#studio</code> and handing off verified review results to humans.</em></p>
+<p><em>Agents collaborating in <code>#studio</code> (bridged to Slack) and handing off verified review results to humans.</em></p>
 
 <img src="docs/img/studio-shipped.png" alt="Human ship command and auto-posted final.md with verified sources in #studio" width="90%" />
-<p><em>Human <code>ship</code> command and auto-posted <code>final.md</code> with verified <code>[F#]</code> sources in <code>#studio</code>.</em></p>
+<p><em>Human <code>ship</code> command and auto-posted <code>final.md</code> with verified <code>[F#]</code> sources in <code>#studio</code> (bridged to Slack).</em></p>
 
 </div>
 
@@ -35,7 +35,7 @@ AI-generated release notes and build-in-public posts routinely invent commit has
 ## 💬 How Switch is Used
 
 > [!IMPORTANT]
-> Switch's `#studio` room is the live operational control plane where Codex-backed agents and human reviewers negotiate every factual claim before a single line of Markdown is shipped.
+> Switch's `#studio` room is the live operational control plane where Codex-backed agents and human reviewers negotiate every factual claim before a single line of Markdown is shipped. The `#studio` room is bridged directly to the team's Slack workspace via the Switch Agent Bridge, so multi-agent collaboration and human review take place in the team's everyday chat interface.
 
 ### Live `#studio` Room Workflow
 
@@ -92,10 +92,12 @@ Benchmark produced by `tools.grade` (`studio/grade@1`) on live run `demo-live-20
 
 *\* Note on `tools.grade` sentence scoring:* Under [`CONTRACT.md §9`](CONTRACT.md), `tools.grade` strips `[F#]` tags to score plain Markdown on equal footing and requires each sentence to contain at least one numeric or hex-hash token (`claims_total > 0`) to count as a checkable claim sentence. Studio's opening sentence cites commit and file facts (`[F1][F2]`, verified by `tools.verify`) without a standalone number token, while **6 / 6 (100.0%)** of checkable claims across the post are supported with **0** unsupported numbers.
 
-Reproduce the grade report on the live run (or run `python3 demo/run_demo.py --offline-only` on a fresh clone, since `runs/` is gitignored):
+Reproduce the grade report on a fresh clone (runs the offline demo to populate `runs/`, then grades the latest output against the baseline):
 
 ```bash
-python3 -m tools.grade --snapshot runs/demo-live-20261107-111427-4794/snapshot.json --input baseline=demo/baseline.md --input studio=runs/demo-live-20261107-111427-4794/final.md
+python3 demo/run_demo.py --offline-only
+RUN=$(ls -td runs/* | head -1)
+python3 -m tools.grade --snapshot "$RUN/snapshot.json" --input baseline=demo/baseline.md --input studio="$RUN/final.md"
 ```
 
 <details>
@@ -240,5 +242,6 @@ pytest infra/test_bot.py
 ### Team 7 — Flip the Switch Hackathon
 
 - **Vivek Yadav** — Foundation, Contract & Schemas (M0), Agent Logic & Prompts (M2)
-- **Ritweek Dubey** — Switch `#studio` Runtime Bridge (M1), Deterministic CLI Tools (M3b), Live Integration & Demo (M4)
+- **Ritweek Dubey** — Switch `#studio` Runtime Bridge (M1), Live Integration & Demo (M4)
+- **Saurabh** — Deterministic CLI Tools (M3b)
 - **Uday Jain** — Fixtures, Offline Sandbox & Verification Test Suites (M3a)
