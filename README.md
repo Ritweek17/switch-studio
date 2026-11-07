@@ -58,6 +58,9 @@ Run individual test suites:
 pytest tests/test_schemas.py    # Schema conformance and payload_ref resolution
 pytest tests/test_verify.py     # Verifier rules and safeguard checks
 pytest tests/test_decisions.py  # Decision replay and ship gating
+pytest tests/test_tools.py      # Deterministic CLI tools
+pytest agents/tests             # Agent logic & prompt wrappers
+pytest infra/test_bot.py        # Switch room WebSocket bridge
 ```
 
 Validate repository fixtures:
@@ -67,7 +70,14 @@ python -m schemas.validate --examples
 python -m schemas.validate fixtures/demo-repo.snapshot.json
 ```
 
-Run the offline sandbox pipeline (end-to-end mock orchestration):
+Run the end-to-end integration demo (M4):
+
+```bash
+python -m demo.run_demo --offline-only   # End-to-end fixture demo + 100% vs 50% grader
+python -m demo.run_demo --live-only      # Live Switch #studio room bridge (see docs/SETUP.md)
+```
+
+Run the offline sandbox pipeline (M3a reference):
 
 ```bash
 python -m sandbox.run

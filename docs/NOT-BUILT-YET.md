@@ -22,11 +22,11 @@ Switch Studio deliberately cuts scope so our core guarantee—**every surviving 
 7. **Binary files count as zero lines:** Binary files have `null` for `added` and `deleted` in `snapshot.json`, which the verifier and count metrics treat as 0.
 8. **Sequential decision log replay:** `tools.apply` replays `decisions.jsonl` strictly in append order; room command concurrency is linearized by the infra bot before recording.
 
-## M3a Offline Sandbox Boundary
+## M3a Offline Sandbox vs. Production Pipeline
 
-The M3a sandbox is a self-contained, offline demonstration: deterministic mock Scout, Writer, and Editor stages generate contract-shaped artifacts from the saved fixture, then use local sandbox verification, decision replay, and rendering. It needs no Git checkout, network connection, room bridge, external API, or LLM credential.
+The M3a sandbox (`sandbox/`) was built as a self-contained, offline reference pipeline: deterministic mock Scout, Writer, and Editor stages generate contract-shaped artifacts from the saved fixture, using local mock verification, decision replay, and rendering. It requires no Git checkout, network connection, room bridge, external API, or LLM credentials.
 
-The production M3b `/tools/` implementation is not present in this checkout. The sandbox modules are intentionally **not** aliases or substitutes for those production tools; M3b integration remains deferred. The sandbox validates its own deterministic behavior and preserves auditable run artifacts, but it does not establish production-tool compatibility until M3b lands.
+Now that the production M3b `/tools/` and M2 `/agents/` implementations have landed on `main`, the primary production workflow and judge showcase are driven by `demo/run_demo.py` (which directly exercises production tools and agents). The sandbox modules in `sandbox/` remain preserved as an offline zero-dependency reference and regression baseline.
 
 ## Known M2 Agent Gaps in v1
 
