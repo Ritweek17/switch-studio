@@ -2,7 +2,8 @@
 
 The bot speaks Switch's WebSocket agent protocol using only the Python
 standard library. Room messages are inputs; all durable files stay under
-``runs/<run_id>/``. It never posts a shipped document anywhere.
+``runs/<run_id>/``. On ``ship``, it posts ``final.md`` into ``#studio`` and
+never auto-publishes to external platforms.
 
 Configuration is read from the environment (and, for local runs, ``.env``).
 See ``docs/SETUP.md`` for the Switch Console setup and required credentials.
@@ -43,6 +44,7 @@ RUN_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{2,39}$")
 JSON_BLOCK_RE = re.compile(r"```json\s*\n(.*?)\n```", re.IGNORECASE | re.DOTALL)
 FACT_RE = re.compile(r"^F[1-9][0-9]*$")
 TAG_BLOCK_RE = re.compile(r"(?P<tags>(?:\s*\[F[1-9][0-9]*\])+\s*)$")
+MAX_SHIP_MESSAGE_CHARS = 3500
 
 DOCUMENT_NAMES = {
     "studio/run@1": "run.json",
@@ -594,6 +596,24 @@ def process_room_message(
     return messages
 
 
+def format_shipped_message(
+    run_id: str,
+    content: str,
+    *,
+    max_chars: int = MAX_SHIP_MESSAGE_CHARS,
+) -> str:
+    """Format runs/<run_id>/final.md as a plain room message within max_chars."""
+    rel_path = f"runs/{run_id}/final.md"
+    header = f"Run {run_id} — shipped final.md:"
+    body = content.strip()
+    full_message = f"{header}\n\n{body}"
+    if len(full_message) <= max_chars:
+        return full_message
+    footer = f"\n\n... (truncated; full file saved at {rel_path})"
+    budget = max(0, max_chars - len(header) - 2 - len(footer))
+    return f"{header}\n\n{body[:budget].rstrip()}{footer}"
+
+
 class RoomWorkflow:
     """Kick off and advance Scout → Writer ↔ Editor → human handoffs."""
 
@@ -695,6 +715,14 @@ class RoomWorkflow:
             if parse_command(text) is not None:
                 status = next((item for item in reports if item.startswith(("approve ", "approve_all ", "reject ", "edit ", "ship "))), "command recorded")
                 self.client.post_message(self.room_id, f"Run {self.store.run_id}: {status}.")
+                if status == "ship accepted":
+                    final_path = self.store.run_dir / "final.md"
+                    if final_path.is_file():
+                        final_text = final_path.read_text(encoding="utf-8")
+                        self.client.post_message(
+                            self.room_id,
+                            format_shipped_message(self.store.run_id, final_text),
+                        )
             return
         try:
             doc = extract_json_document(text)
