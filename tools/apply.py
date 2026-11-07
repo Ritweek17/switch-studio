@@ -39,17 +39,18 @@ def replay_decisions(draft: dict[str, Any], decisions: list[dict[str, Any]]) -> 
                     state["status"] = "approved"
         elif sentence_id in states:
             state = states[sentence_id]
-            if state["status"] != "pending":
-                continue
             if command == "approve":
                 state["status"] = "approved"
+                state["reason"] = None
             elif command == "reject":
                 state["status"] = "rejected"
                 state["reason"] = decision.get("reason")
             elif command == "edit":
                 state["text"] = decision["text"]
-                state["facts"] = list(decision["facts"])
+                if decision.get("facts") is not None:
+                    state["facts"] = list(decision["facts"])
                 state["status"] = "approved"
+                state["reason"] = None
 
     effective = {
         "schema": "studio/draft@1",
