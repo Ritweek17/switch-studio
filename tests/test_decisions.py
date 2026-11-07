@@ -4,8 +4,9 @@ import json
 from pathlib import Path
 
 import pytest
-from sandbox.apply import apply_decisions, parse_and_apply_command, replay_decisions
+from sandbox.apply import parse_and_apply_command
 from schemas.validate import load_document, validate
+from tools.apply import replay_decisions
 
 EXAMPLES_DIR = Path(__file__).resolve().parent.parent / "schemas" / "examples"
 
@@ -207,3 +208,112 @@ def test_ship_succeeds_when_all_decided_and_surviving_pass(base_snapshot, base_f
     )
     assert decision["result"]["accepted"] is True
     assert decision["result"]["error"] is None
+
+
+def _make_decision(
+    run_id: str,
+    command: str,
+    sentence_id: str | None = None,
+    *,
+    reason: str | None = None,
+    text: str | None = None,
+    facts: list[str] | None = None,
+    accepted: bool = True,
+    error: str | None = None,
+) -> dict:
+    doc = {
+        "schema": "studio/decision@1",
+        "run_id": run_id,
+        "agent": "human",
+        "created_at": "2026-11-04T10:16:00Z",
+        "user": "@human",
+        "draft_revision": 0,
+        "command": command,
+        "result": {"accepted": accepted, "error": error},
+    }
+    if sentence_id is not None:
+        doc["sentence_id"] = sentence_id
+    if reason is not None:
+        doc["reason"] = reason
+    if text is not None:
+        doc["text"] = text
+    if facts is not None:
+        doc["facts"] = facts
+    return doc
+
+
+def test_replay_approve_then_edit(base_draft):
+    """In replay_decisions, an edit after approve overrides the text and facts and stays approved."""
+    run_id = base_draft["run_id"]
+    decisions = [
+        _make_decision(run_id, "approve", "S1"),
+        _make_decision(
+            run_id,
+            "edit",
+            "S1",
+            text="Saurabh added the verifier CLI in commit 9f3c2a1.",
+            facts=["F1"],
+        ),
+    ]
+    effective_draft, final_states = replay_decisions(base_draft, decisions)
+    assert final_states["S1"]["status"] == "approved"
+    assert final_states["S1"]["text"] == "Saurabh added the verifier CLI in commit 9f3c2a1."
+    assert final_states["S1"]["facts"] == ["F1"]
+    s1 = next(s for s in effective_draft["sentences"] if s["id"] == "S1")
+    assert s1["text"] == "Saurabh added the verifier CLI in commit 9f3c2a1."
+    assert s1["facts"] == ["F1"]
+
+
+def test_replay_approve_then_reject(base_draft):
+    """In replay_decisions, a reject after approve marks the sentence rejected and drops it."""
+    run_id = base_draft["run_id"]
+    decisions = [
+        _make_decision(run_id, "approve", "S1"),
+        _make_decision(run_id, "reject", "S1", reason="Superseded by later summary."),
+    ]
+    effective_draft, final_states = replay_decisions(base_draft, decisions)
+    assert final_states["S1"]["status"] == "rejected"
+    assert final_states["S1"]["reason"] == "Superseded by later summary."
+    assert not any(s["id"] == "S1" for s in effective_draft["sentences"])
+
+
+def test_replay_reject_then_approve(base_draft):
+    """In replay_decisions, an approve after reject restores the sentence to approved."""
+    run_id = base_draft["run_id"]
+    decisions = [
+        _make_decision(run_id, "reject", "S1", reason="Mistakenly rejected."),
+        _make_decision(run_id, "approve", "S1"),
+    ]
+    effective_draft, final_states = replay_decisions(base_draft, decisions)
+    assert final_states["S1"]["status"] == "approved"
+    assert final_states["S1"]["reason"] is None
+    assert any(s["id"] == "S1" for s in effective_draft["sentences"])
+
+
+def test_replay_edit_then_edit(base_draft):
+    """In replay_decisions, a second edit overrides the first edit's text and facts."""
+    run_id = base_draft["run_id"]
+    decisions = [
+        _make_decision(
+            run_id,
+            "edit",
+            "S4",
+            text="First human rewrite of S4.",
+            facts=["F4"],
+        ),
+        _make_decision(
+            run_id,
+            "edit",
+            "S4",
+            text="Exactly 3 contributors landed commits.",
+            facts=["F4", "F5"],
+        ),
+    ]
+    effective_draft, final_states = replay_decisions(base_draft, decisions)
+    assert final_states["S4"]["status"] == "approved"
+    assert final_states["S4"]["text"] == "Exactly 3 contributors landed commits."
+    assert final_states["S4"]["facts"] == ["F4", "F5"]
+    s4 = next(s for s in effective_draft["sentences"] if s["id"] == "S4")
+    assert s4["text"] == "Exactly 3 contributors landed commits."
+    assert s4["facts"] == ["F4", "F5"]
+
