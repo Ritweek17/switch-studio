@@ -26,13 +26,13 @@
 
 ---
 
-## The Problem
+## 🎯 The Problem
 
 AI-generated release notes and build-in-public posts routinely invent commit hashes, inflate metrics, or hallucinate file changes. Switch Studio enforces a strict evidence contract (`studio/*@1`): every sentence and number is deterministically checked against a local Git snapshot (`tools.verify`), and nothing ships without explicit human sign-off in `#studio`.
 
 ---
 
-## How Switch is Used
+## 💬 How Switch is Used
 
 > [!IMPORTANT]
 > Switch's `#studio` room is the live operational control plane where Codex-backed agents and human reviewers negotiate every factual claim before a single line of Markdown is shipped.
@@ -50,7 +50,7 @@ While the deterministic verification core (`tools.*`) and fallback harness (`dem
 
 ---
 
-## Architecture
+## 📐 Architecture
 
 ```mermaid
 flowchart TD
@@ -79,7 +79,7 @@ flowchart TD
 
 ---
 
-## Proven Results
+## 📊 Proven Results
 
 Benchmark produced by `tools.grade` (`studio/grade@1`) on live run `demo-live-20261107-111427-4794`, comparing an uncited one-shot baseline (`demo/baseline.md`) against Studio's shipped output (`runs/demo-live-20261107-111427-4794/final.md`):
 
@@ -131,7 +131,7 @@ Vivek Yadav modified infra/bot.py in a commit titled feat(infra): post final.md 
 
 ---
 
-## Quickstart
+## 🚀 Quickstart
 
 Requires **Python 3.11+** and **Git** (standard library only; zero runtime third-party packages).
 
@@ -173,7 +173,7 @@ See [`docs/SETUP.md`](docs/SETUP.md) for full Switch Console registration, Codex
 
 ---
 
-## Honest Scope & Limitations
+## 🔍 Honest Scope & Limitations
 
 Full details live in [`docs/NOT-BUILT-YET.md`](docs/NOT-BUILT-YET.md) and [`CONTRACT.md`](CONTRACT.md):
 
@@ -184,7 +184,7 @@ Full details live in [`docs/NOT-BUILT-YET.md`](docs/NOT-BUILT-YET.md) and [`CONT
 
 ---
 
-## Testing, Repository Layout & Team
+## 🧪 Testing, Repository Layout & Team
 
 ### Running the Test Suite
 
