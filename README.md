@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/Flip%20the%20Switch-Team%207-6f42c1?style=flat-square" alt="Hackathon Flip the Switch · Team 7" height="20" />
 </p>
 
-[How Switch is Used](#how-switch-is-used) · [Architecture](#architecture) · [Results](#proven-results) · [Quickstart](#quickstart) · [Scope](#honest-scope--limitations)
+[How Switch is Used](#-how-switch-is-used) · [Architecture](#-architecture) · [Results](#-proven-results) · [Quickstart](#-quickstart) · [Scope](#-honest-scope--limitations)
 
 **[Watch the Demo Video](VIDEO_LINK_HERE)**
 
