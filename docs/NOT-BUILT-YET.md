@@ -6,7 +6,7 @@ Switch Studio deliberately cuts scope so our core guarantee—**every surviving 
 
 ## Deliberate Scope Cuts
 
-1. **No auto-posting to X or blogs:** `ship` writes `runs/<run_id>/final.md` and stops ([ADR-0006](adr/0006-human-commands-and-ship-gate.md)). Publishing always stays with a human.
+1. **No auto-posting to X or blogs:** `ship` writes `runs/<run_id>/final.md` and posts its contents into the `#studio` room for the team ([ADR-0006](adr/0006-human-commands-and-ship-gate.md)). External publishing always stays with a human.
 2. **One local git repository, read-only:** Tools run local `git` commands against one clone or read a saved fixture snapshot ([ADR-0003](adr/0003-local-git-snapshots.md)). No writes to the target repo, no network calls inside `/tools`.
 3. **No GitHub API metadata:** PR review comments, issue threads, stars, and CI run logs are not ingested in v1. Only git commit history and file stats are in `studio/snapshot@1`.
 4. **Merge commits excluded:** `tools.snapshot` runs with `--no-merges` so merge commits do not double-count changed files or inflate line counts ([ADR-0003](adr/0003-local-git-snapshots.md)).

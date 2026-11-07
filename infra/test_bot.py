@@ -7,7 +7,17 @@ import socket
 import struct
 from pathlib import Path
 
-from infra.bot import CommandProcessor, RoomWorkflow, RunStore, SwitchClient, WebSocket, event_is_human_message, message_from_event
+from infra.bot import (
+    MAX_SHIP_MESSAGE_CHARS,
+    CommandProcessor,
+    RoomWorkflow,
+    RunStore,
+    SwitchClient,
+    WebSocket,
+    event_is_human_message,
+    format_shipped_message,
+    message_from_event,
+)
 from schemas.validate import load_document, validate
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -128,3 +138,63 @@ def test_human_command_sequence_verifies_edits_and_ships(tmp_path: Path):
     decisions = store.decisions()
     assert [decision["command"] for decision in decisions] == ["approve", "reject", "edit", "approve_all", "ship"]
     assert all(not validate(decision) for decision in decisions)
+
+
+def test_ship_over_mock_socket_posts_final_markdown_to_room(tmp_path: Path):
+    store = RunStore(ROOT, "demo-001", runs_dir=tmp_path / "runs")
+    snapshot = load_document(EXAMPLES / "snapshot.json")
+    facts = load_document(EXAMPLES / "facts.json")
+    draft = load_document(EXAMPLES / "draft.r0.json")
+    for name, document in (("snapshot.json", snapshot), ("facts.json", facts), ("draft.r0.json", draft)):
+        (store.run_dir / name).write_text(json.dumps(document), encoding="utf-8")
+
+    commands = CommandProcessor(store, repo_root=ROOT)
+    assert commands.process("reject S4: remove uncited sentence", "Ritweek")["result"]["accepted"] is True
+    assert commands.process("approve all", "Ritweek")["result"]["accepted"] is True
+
+    client = FakeClient()
+    workflow = RoomWorkflow(store, client, ROOT)
+    workflow.room_id = "room-1"
+
+    left, right = socket.socketpair()
+    try:
+        server_ws = WebSocket(left)
+        bot_ws = WebSocket(right)
+        ship_frame = {
+            "event": "message",
+            "id": 12,
+            "data": {
+                "type": "message",
+                "sequence": 12,
+                "payload": {"body": "ship", "sender_name": "Ritweek", "on_behalf_of": "ritweek"},
+            },
+        }
+        server_ws.send_json(ship_frame)
+        fin, opcode, raw = bot_ws.receive_frame()
+        assert (fin, opcode) == (True, 1)
+        workflow.handle(json.loads(raw.decode("utf-8")))
+    finally:
+        left.close()
+        right.close()
+
+    final_path = store.run_dir / "final.md"
+    assert final_path.is_file()
+    final_text = final_path.read_text(encoding="utf-8").strip()
+
+    assert len(client.posts) == 2
+    assert client.posts[0] == ("room-1", "Run demo-001: ship accepted.")
+    shipped_room_id, shipped_msg = client.posts[1]
+    assert shipped_room_id == "room-1"
+    assert "demo-001" in shipped_msg.splitlines()[0]
+    assert final_text in shipped_msg
+    assert "**Sources**" in shipped_msg
+
+
+def test_format_shipped_message_truncates_when_final_md_exceeds_limit():
+    oversized = "Verified sentence with citations. [F1]\n" * 200
+    msg = format_shipped_message("demo-001", oversized, max_chars=300)
+    assert len(msg) <= 300
+    assert "demo-001" in msg.splitlines()[0]
+    assert "runs/demo-001/final.md" in msg
+    assert MAX_SHIP_MESSAGE_CHARS >= 1000
+
